@@ -1663,16 +1663,23 @@ function renderSessions() {
   const grid = document.getElementById('sessions-grid');
   const empty = document.getElementById('empty-sessions');
 
-  // Update assignee filter options
-  const assigneeFilter = document.getElementById('filter-assignee');
-  const currentAssignee = assigneeFilter ? assigneeFilter.value : 'all';
-  if (assigneeFilter) {
-    assigneeFilter.innerHTML = '<option value="all">All assignees</option>' +
-      state.team.map(m => `<option value="${escHtml(m.name)}" ${currentAssignee===m.name?'selected':''}>${escHtml(m.name)}</option>`).join('');
+  // Read current filter values BEFORE touching the DOM
+  const statusFilter = (document.getElementById('filter-status') || {}).value || 'all';
+  const assigneeFilterEl = document.getElementById('filter-assignee');
+  const assigneeVal = (assigneeFilterEl || {}).value || 'all';
+
+  // Rebuild assignee dropdown options while preserving the current selection
+  if (assigneeFilterEl) {
+    const prev = assigneeVal;
+    assigneeFilterEl.innerHTML = '<option value="all">All assignees</option>' +
+      state.team.map(m => `<option value="${escHtml(m.name)}">${escHtml(m.name)}</option>`).join('');
+    // Restore selection
+    assigneeFilterEl.value = prev;
+    // If the previously selected member was removed, fall back to 'all'
+    if (assigneeFilterEl.value !== prev) assigneeFilterEl.value = 'all';
   }
 
-  const statusFilter = document.getElementById('filter-status') ? document.getElementById('filter-status').value : 'all';
-  const assigneeVal = currentAssignee;
+  const effectiveAssignee = (assigneeFilterEl || {}).value || 'all';
 
   if (state.sessions.length === 0) {
     empty.style.display = '';
@@ -1692,11 +1699,11 @@ function renderSessions() {
     const visibleTasks = allTasks.map((t, ti) => ({t, ti})).filter(({t}) => {
       if (statusFilter === 'incomplete' && t.done) return false;
       if (statusFilter === 'complete' && !t.done) return false;
-      if (assigneeVal !== 'all' && t.assignee !== assigneeVal) return false;
+      if (effectiveAssignee !== 'all' && t.assignee !== effectiveAssignee) return false;
       return true;
     });
 
-    const filterActive = statusFilter !== 'all' || assigneeVal !== 'all';
+    const filterActive = statusFilter !== 'all' || effectiveAssignee !== 'all';
     const hiddenCount = allTasks.length - visibleTasks.length;
 
     const card = document.createElement('div');
