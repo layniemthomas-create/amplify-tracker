@@ -1954,6 +1954,14 @@ function saveSessionNote(si, value) {
 
 function toggleTask(si, ti) {
   state.sessions[si].tasks[ti].done = !state.sessions[si].tasks[ti].done;
+  const isDone = state.sessions[si].tasks[ti].done;
+
+  // Update checkbox and text immediately in DOM — no waiting for full re-render
+  const checkEl = document.querySelector(`#task-${si}-${ti} .task-check`);
+  const textEl  = document.querySelector(`#task-${si}-${ti} .task-text`);
+  if (checkEl) { checkEl.classList.toggle('done', isDone); }
+  if (textEl)  { textEl.classList.toggle('done', isDone); }
+
   saveState();
   renderSessions();
   renderStats();
