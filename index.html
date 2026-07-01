@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amplify 2026 — Session Prep Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #4f7cff;
+    --accent-glow: rgba(79,124,255,0.15);
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e8eaf6;
+    --muted: #7b82a8;
+    --sep14: #22c55e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #0f1117 0%, #151929 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #fff;
+  }
+  .header h1 span { color: var(--accent); }
+  .countdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 600;
+  }
+  .countdown-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.4; }
+  }
+
+  /* ── Timeline bar ── */
+  .timeline-bar {
+    display: flex;
+    gap: 0;
+    padding: 16px 40px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .timeline-bar::-webkit-scrollbar { display: none; }
+  .tl-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+    position: relative;
+    cursor: default;
+  }
+  .tl-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 13px;
+    left: 55%;
+    width: calc(100% - 10px);
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+  .tl-item.passed:not(:last-child)::after { background: var(--accent); opacity: 0.5; }
+  .tl-dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 1;
+    position: relative;
+  }
+  .tl-item.passed .tl-dot { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+  .tl-item.today .tl-dot { border-color: var(--yellow); background: rgba(245,158,11,0.15); box-shadow: 0 0 10px rgba(245,158,11,0.4); }
+  .tl-item.event .tl-dot { border-color: var(--sep14); background: rgba(34,197,94,0.1); }
+  .tl-label {
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .tl-item.passed .tl-label { color: var(--accent); }
+  .tl-item.today .tl-label { color: var(--yellow); }
+  .tl-item.event .tl-label { color: var(--sep14); }
+  .tl-date { font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .tl-item.today .tl-date { color: var(--yellow); }
+
+  /* ── Main layout ── */
+  .main { padding: 28px 40px; display: grid; gap: 28px; }
+
+  /* ── Progress overview ── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+  .stat-card .value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 4px;
+    line-height: 1;
+  }
+  .stat-card .value span { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .stat-card .bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 10px; }
+  .stat-card .bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s ease; }
+
+  /* ── Section headers ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .section-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .section-header .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .section-header .add-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 12px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .section-header .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Sessions grid ── */
+  .sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .session-card:hover { border-color: var(--accent); }
+  .session-card-header {
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .session-color-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .session-title-area { flex: 1; min-width: 0; }
+  .session-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.35;
+  }
+  .session-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+  .session-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .session-tag.solo { border-color: rgba(79,124,255,0.4); color: #7da4ff; }
+  .session-tag.collab { border-color: rgba(245,158,11,0.4); color: #fbbf24; }
+  .session-progress-bar {
+    height: 3px;
+    background: var(--border);
+    margin: 0 18px 0;
+  }
+  .session-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .session-tasks { padding: 8px 0 6px; }
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-radius: 0;
+  }
+  .task-item:hover { background: var(--surface2); }
+  .task-check {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: transparent;
+    cursor: pointer;
+  }
+  .task-check.done {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .task-check.done::after {
+    content: '✓';
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .task-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
+  .task-text.done { color: var(--muted); text-decoration: line-through; }
+  .task-deadline {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .task-deadline.urgent { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .task-deadline.soon { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .task-deadline.later { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .task-deadline.done-tag { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+  .session-card-footer {
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-pct { font-size: 12px; color: var(--muted); }
+  .footer-pct strong { color: var(--text); }
+  .add-task-inline {
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    padding: 4px 0;
+    transition: color 0.15s;
+  }
+  .add-task-inline:hover { color: var(--accent); }
+
+  /* ── Deadlines table ── */
+  .deadlines-table { width: 100%; border-collapse: collapse; }
+  .deadlines-table thead th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 0 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .deadlines-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .deadlines-table tbody tr:hover { background: var(--surface2); }
+  .deadlines-table tbody tr:last-child { border-bottom: none; }
+  .deadlines-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .dl-date {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .dl-milestone { color: var(--text); font-weight: 500; }
+  .dl-note { color: var(--muted); font-size: 12px; }
+  .dl-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .dl-status.passed { background: rgba(79,124,255,0.1); color: var(--accent); border: 1px solid rgba(79,124,255,0.25); }
+  .dl-status.upcoming { background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.25); }
+  .dl-status.future { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .dl-status.event { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+  .highlight-row td { background: rgba(245,158,11,0.05); }
+
+  /* ── Add session modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+  }
+  .modal h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+  .btn-primary {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* ── Notes area ── */
+  .notes-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .notes-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+  }
+  .notes-textarea:focus { border-color: var(--accent); }
+  .notes-textarea::placeholder { color: var(--muted); }
+
+  /* ── Add task input ── */
+  /* ── Assignee ── */
+  .assignee-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 20px;
+    padding: 2px 8px 2px 3px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .assignee-chip:hover { border-color: var(--accent); color: var(--text); }
+  .assignee-chip.assigned { background: transparent; }
+  .assignee-avatar {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .assignee-chip.unassigned .assignee-avatar {
+    background: var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Team manager ── */
+  .team-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .team-member-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px 5px 6px;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .team-member-pill .pill-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .team-member-pill .pill-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 0 0 4px;
+    line-height: 1;
+    transition: color 0.1s;
+  }
+  .team-member-pill .pill-remove:hover { color: var(--red); }
+  .add-member-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .add-member-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+  }
+  .add-member-input:focus { border-color: var(--accent); }
+  .add-member-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ── Assignee dropdown ── */
+  .assignee-dropdown {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 300;
+    min-width: 160px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .assignee-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text);
+    transition: background 0.1s;
+  }
+  .assignee-option:hover { background: var(--surface2); }
+  .assignee-option.active { background: var(--accent-glow); color: var(--accent); }
+  .assignee-option .opt-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .assignee-option.unassign-opt { color: var(--muted); font-size: 12px; }
+
+  .add-task-row {
+    display: flex;
+    gap: 8px;
+    padding: 6px 18px 10px;
+    display: none;
+  }
+  .add-task-row.visible { display: flex; }
+  .add-task-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+  }
+  .add-task-input:focus { border-color: var(--accent); }
+  .add-task-submit {
+    background: var(--accent);
+    border: none;
+    border-radius: 7px;
+    padding: 7px 14px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .section-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .empty-state .icon { font-size: 28px; margin-bottom: 10px; }
+
+  /* ── Focus Board ── */
+  .focus-board {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .focus-board-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(79,124,255,0.06) 100%);
+  }
+  .focus-board-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .focus-board-title h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .focus-icon { font-size: 16px; }
+  .focus-controls { display: flex; align-items: center; }
+
+  .focus-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .focus-item:last-child { border-bottom: none; }
+  .focus-item:hover { background: var(--surface2); }
+  .focus-check {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .focus-check:hover { border-color: var(--green); }
+  .focus-body { flex: 1; min-width: 0; }
+  .focus-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .focus-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border-left: 3px solid;
+  }
+  .focus-priority-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .focus-priority-badge.critical { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .focus-priority-badge.high { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .focus-priority-badge.normal { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .focus-empty {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .focus-empty .icon { font-size: 28px; margin-bottom: 8px; }
+
+
+  .resources-section {
+    border-top: 1px solid var(--border);
+    padding: 10px 18px 12px;
+  }
+  .resources-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .resources-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .resources-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; }
+  .resource-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .resource-link {
+    color: var(--accent);
+    text-decoration: none;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .resource-link:hover { text-decoration: underline; }
+  .resource-label-text { color: var(--muted); font-size: 11px; flex-shrink: 0; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .resource-remove {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 13px; padding: 0; line-height: 1; flex-shrink: 0;
+    transition: color 0.1s;
+  }
+  .resource-remove:hover { color: var(--red); }
+  .add-resource-row {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .add-resource-row.visible { display: flex; }
+  .add-resource-row input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    outline: none;
+    width: 100%;
+  }
+  .add-resource-row input:focus { border-color: var(--accent); }
+  .add-resource-actions { display: flex; gap: 6px; }
+  .btn-add-link {
+    background: var(--accent); border: none; border-radius: 7px;
+    padding: 6px 14px; color: #fff; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .btn-cancel-link {
+    background: transparent; border: 1px solid var(--border); border-radius: 7px;
+    padding: 6px 10px; color: var(--muted); font-size: 12px;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+
+  /* ── Standalone task sections (Hub, HH) ── */
+  .standalone-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    border-radius: 4px;
+  }
+  .standalone-task:last-child { border-bottom: none; }
+  .standalone-task:hover { background: var(--surface2); }
+
+  .empty-standalone {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 4px;
+    font-style: italic;
+  }
+
+
+    .header, .timeline-bar, .main { padding-left: 16px; padding-right: 16px; }
+    .sessions-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Amplify <span>2026</span> — Session Prep</h1>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Track every session, task, and deadline in one place</div>
+    </div>
+    <div class="countdown">
+      <div class="countdown-dot"></div>
+      <span id="countdown-text">Loading…</span>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline bar -->
+<div class="timeline-bar">
+  <div class="tl-item passed" title="Internal Presenter Kickoff">
+    <div class="tl-dot">✓</div>
+    <div class="tl-label">Kickoff</div>
+    <div class="tl-date">Jun 25</div>
+  </div>
+  <div class="tl-item passed" title="Rainfocus speaker portal">
+    <div class="tl-dot">✓</div>
+    <div class="tl-label">Speaker Portal</div>
+    <div class="tl-date">Jun 26</div>
+  </div>
+  <div class="tl-item today" title="Today">
+    <div class="tl-dot">●</div>
+    <div class="tl-label">Today</div>
+    <div class="tl-date">Jul 1</div>
+  </div>
+  <div class="tl-item" title="Agenda goes public">
+    <div class="tl-dot"></div>
+    <div class="tl-label">Agenda Public</div>
+    <div class="tl-date">Wk Jul 6</div>
+  </div>
+  <div class="tl-item" title="Deck first drafts due">
+    <div class="tl-dot"></div>
+    <div class="tl-label">First Drafts</div>
+    <div class="tl-date">Jul 22</div>
+  </div>
+  <div class="tl-item" title="CPE reviews begin">
+    <div class="tl-dot"></div>
+    <div class="tl-label">CPE Reviews</div>
+    <div class="tl-date">Jul 23</div>
+  </div>
+  <div class="tl-item" title="Final drafts due">
+    <div class="tl-dot"></div>
+    <div class="tl-label">Final Drafts</div>
+    <div class="tl-date">Aug 11</div>
+  </div>
+  <div class="tl-item" title="Mobile app launches">
+    <div class="tl-dot"></div>
+    <div class="tl-label">App Launches</div>
+    <div class="tl-date">Aug 21</div>
+  </div>
+  <div class="tl-item event" title="Workiva Amplify 2026">
+    <div class="tl-dot">🎉</div>
+    <div class="tl-label">Amplify!</div>
+    <div class="tl-date">Sep 14</div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- Stats -->
+  <div class="overview-grid" id="stats-row">
+    <div class="stat-card">
+      <div class="label">Sessions</div>
+      <div class="value" id="stat-sessions">0</div>
+      <div class="bar"><div class="bar-fill" id="bar-sessions" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Tasks Done</div>
+      <div class="value"><span id="stat-done">0</span> <span>/ <span id="stat-total">0</span></span></div>
+      <div class="bar"><div class="bar-fill" id="bar-tasks" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Next Deadline</div>
+      <div class="value" style="font-size:18px;" id="stat-next">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Days to Amplify</div>
+      <div class="value" id="stat-days">—</div>
+    </div>
+  </div>
+
+  <!-- Focus Board -->
+  <div class="focus-board" id="focus-board">
+    <div class="focus-board-header">
+      <div class="focus-board-title">
+        <span class="focus-icon">⚡</span>
+        <h2>Focus Right Now</h2>
+        <div class="badge" id="focus-count">0</div>
+      </div>
+      <div class="focus-controls">
+        <span style="font-size:11px;color:var(--muted);margin-right:8px;">Show top</span>
+        <select id="focus-limit" onchange="renderFocusBoard()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:3px 8px;outline:none;cursor:pointer;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="15">15</option>
+          <option value="999">All</option>
+        </select>
+      </div>
+    </div>
+    <div id="focus-list"></div>
+  </div>
+
+  <!-- Sessions -->
+  <div>
+    <div class="section-header">
+      <h2>Your Sessions</h2>
+      <div class="badge" id="session-count-badge">0</div>
+      <button class="add-btn" onclick="openAddSession()">+ Add Session</button>
+    </div>
+    <div class="sessions-grid" id="sessions-grid">
+      <div class="empty-state" id="empty-sessions">
+        <div class="icon">🎤</div>
+        <div>No sessions yet — add your first one above</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deadlines -->
+  <div class="section-box">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h2>Master Deadline Calendar</h2>
+    </div>
+    <table class="deadlines-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Milestone</th>
+          <th>What to do</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dl-date" style="color:var(--accent)">Jun 25</td>
+          <td class="dl-milestone">Internal Presenter Kickoff</td>
+          <td class="dl-note">Attend kickoff, confirm your sessions</td>
+          <td><span class="dl-status passed">✓ Passed</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date" style="color:var(--accent)">Jun 26</td>
+          <td class="dl-milestone">Rainfocus Speaker Portal Launch</td>
+          <td class="dl-note">Submit bio & headshot for each session</td>
+          <td><span class="dl-status passed">✓ Passed</span></td>
+        </tr>
+        <tr class="highlight-row">
+          <td class="dl-date" style="color:var(--yellow)">Wk Jul 6</td>
+          <td class="dl-milestone">Agenda Goes Public</td>
+          <td class="dl-note">Confirm titles, abstracts, learning objectives are finalized</td>
+          <td><span class="dl-status upcoming">⚡ Up next</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date">Jul 22</td>
+          <td class="dl-milestone">Deck First Drafts Due</td>
+          <td class="dl-note">Submit draft slides for all sessions — structure + key content</td>
+          <td><span class="dl-status future">Upcoming</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date">Jul 23</td>
+          <td class="dl-milestone">CPE Reviews Begin</td>
+          <td class="dl-note">CPE evaluators will start reviewing — ensure learning objectives are clear</td>
+          <td><span class="dl-status future">Upcoming</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date">Aug 11</td>
+          <td class="dl-milestone">Final Drafts Due · Content &amp; Design Reviews Begin</td>
+          <td class="dl-note">Submit polished final decks; co-presenter alignment done</td>
+          <td><span class="dl-status future">Upcoming</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date">Aug 21</td>
+          <td class="dl-milestone">Mobile App Launches</td>
+          <td class="dl-note">Check your sessions appear correctly in the app</td>
+          <td><span class="dl-status future">Upcoming</span></td>
+        </tr>
+        <tr>
+          <td class="dl-date" style="color:var(--green)">Sep 14</td>
+          <td class="dl-milestone">🎉 Workiva Amplify 2026</td>
+          <td class="dl-note">Showtime!</td>
+          <td><span class="dl-status event">Event Day</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Hub / Expo Hall -->
+  <div class="section-box" id="hub-section">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h2>🏢 Capital Markets Hub — Expo Hall</h2>
+      <div class="badge" id="hub-done-badge">0/0</div>
+    </div>
+    <div id="hub-tasks-list"></div>
+    <div class="add-task-row visible" id="hub-add-row" style="padding:10px 0 0;">
+      <input class="add-task-input" id="hub-add-input" placeholder="Add a hub task…" onkeydown="if(event.key==='Enter')addStandaloneTask('hub')">
+      <button class="add-task-submit" onclick="addStandaloneTask('hub')">Add</button>
+    </div>
+  </div>
+
+  <!-- Happy Hour -->
+  <div class="section-box" id="hh-section">
+    <div class="section-header" style="margin-bottom:16px;">
+      <h2>🥂 Capital Markets Networking Happy Hour</h2>
+      <div class="badge" id="hh-done-badge">0/0</div>
+    </div>
+    <div id="hh-tasks-list"></div>
+    <div class="add-task-row visible" id="hh-add-row" style="padding:10px 0 0;">
+      <input class="add-task-input" id="hh-add-input" placeholder="Add a happy hour task…" onkeydown="if(event.key==='Enter')addStandaloneTask('hh')">
+      <button class="add-task-submit" onclick="addStandaloneTask('hh')">Add</button>
+    </div>
+  </div>
+
+  <!-- Team -->
+  <div class="team-section">
+    <div class="section-header" style="margin-bottom:4px;">
+      <h2>Your Team</h2>
+      <div class="badge" id="team-count-badge">0</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Add people you're working with — then assign them to tasks on any session card.</div>
+    <div class="team-grid" id="team-grid"></div>
+    <div class="add-member-row">
+      <input class="add-member-input" id="member-input" placeholder="Name (e.g. Laynie Thomas)" onkeydown="if(event.key==='Enter')addMember()">
+      <button class="add-member-btn" onclick="addMember()">Add Person</button>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes-area">
+    <div class="section-header" style="margin-bottom:14px;">
+      <h2>General Notes</h2>
+    </div>
+    <textarea class="notes-textarea" id="global-notes" placeholder="Parking lot ideas, questions for your team, things to follow up on…" oninput="saveNotes()"></textarea>
+  </div>
+
+</div>
+
+<!-- Add Session Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>Add a Session</h3>
+    <div class="form-group">
+      <label>Session Title</label>
+      <input type="text" id="new-title" placeholder="e.g. Financial Close Automation Deep Dive">
+    </div>
+    <div class="form-group">
+      <label>Presenter Type</label>
+      <select id="new-type">
+        <option value="solo">Solo</option>
+        <option value="collab">Co-presenter</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Co-presenter Name(s) (optional)</label>
+      <input type="text" id="new-copresenter" placeholder="e.g. Jane Smith, Tom Lee">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="addSession()">Add Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assignee dropdown -->
+<div class="assignee-dropdown" id="assignee-dropdown" style="display:none"></div>
+
+<script>
+// ── State ──
+const STORAGE_KEY = 'amplify2026_v4';
+let state = {
+  sessions: [],
+  notes: '',
+  team: [],
+  hub: [],
+  hh: []
+};
+
+const SESSION_COLORS = ['#4f7cff','#f59e0b','#22c55e','#ec4899','#a78bfa','#f97316','#06b6d4','#84cc16'];
+const DEADLINES = [
+  { date: 'Jul 6', label: 'Agenda titles/abstracts finalized', urgency: 'soon' },
+  { date: 'Jul 22', label: 'First draft deck submitted', urgency: 'soon' },
+  { date: 'Jul 23', label: 'CPE learning objectives locked', urgency: 'soon' },
+  { date: 'Aug 11', label: 'Final deck submitted', urgency: 'later' },
+  { date: 'Aug 21', label: 'Verify session in mobile app', urgency: 'later' },
+];
+
+function getDefaultTasks(type) {
+  const shared = [
+    { text: 'Confirm session title & abstract', done: false },
+    { text: 'Upload bio & headshot to Rainfocus', done: false },
+    { text: 'Define learning objectives (for CPE)', done: false },
+    { text: 'Build first draft deck', done: false },
+    { text: 'Submit first draft by Jul 22', done: false },
+    { text: 'Incorporate CPE review feedback', done: false },
+    { text: 'Submit final deck by Aug 11', done: false },
+    { text: 'Do a full run-through practice', done: false },
+    { text: 'Check session in Amplify mobile app (Aug 21)', done: false },
+  ];
+  if (type === 'collab') {
+    shared.splice(3, 0,
+      { text: 'Align with co-presenter on slide ownership', done: false },
+      { text: 'Schedule co-presenter rehearsal', done: false }
+    );
+  }
+  return shared;
+}
+
+const PRESEED_SESSIONS = [
+  {
+    title: 'FR10 · Capital Markets Outlook and Trends',
+    type: 'collab',
+    copresenter: 'Nick Accordino & Will Braeutigam (Deloitte) — No Workiva speakers',
+    color: '#4f7cff',
+    tasks: [
+      // ── Speakers ──
+      { text: '🎤 Nick Accordino (Deloitte) — ✅ CONFIRMED', done: true },
+      { text: '🎤 Will Braeutigam (Deloitte) — ✅ CONFIRMED', done: true },
+      { text: '🎤 [OPTIONAL] Confirm if Deloitte wants to add any additional speakers — requires Workiva approval', done: false },
+
+      // ── Kickoff & content alignment ──
+      { text: '📅 Schedule kickoff call with Nick & Will — set all check-in dates & deadlines in this call', done: false },
+      { text: '✍️ Write / finalize session abstract — to be shared with Deloitte at kickoff', done: false },
+      { text: '✍️ Finalize session description for agenda / Rainfocus', done: false },
+      { text: '🤝 Establish content SLA with Deloitte: define approval rights, revision process, and who has final say on slides', done: false },
+      { text: '📋 Share session objectives & abstract with Deloitte so their content stays in scope', done: false },
+
+      // ── Content development & review cadence ──
+      { text: '🗓️ Set up recurring check-in meeting cadence with Deloitte for content reviews (establish at kickoff)', done: false },
+      { text: '📤 Deloitte to deliver first draft slides — due by Jul 22', done: false },
+      { text: '👀 You + Josh: review first draft deck & provide feedback to Deloitte', done: false },
+      { text: '📤 Deloitte to deliver revised / final slides — due by Aug 11', done: false },
+      { text: '👀 You + Josh: final content approval on Deloitte slides', done: false },
+
+      // ── CPE ──
+      { text: '📝 Submit learning objectives for CPE review — CPE Reviewer: Stan Starobin — due Jul 23', done: false },
+      { text: '✅ Incorporate any CPE review feedback into session content', done: false },
+
+      // ── Speaker portal / logistics ──
+      { text: '🖼️ Collect headshot from Nick Accordino — upload to Rainfocus / speaker portal', done: false },
+      { text: '🖼️ Collect headshot from Will Braeutigam — upload to Rainfocus / speaker portal', done: false },
+      { text: '📄 Collect bio from Nick Accordino — upload to speaker portal', done: false },
+      { text: '📄 Collect bio from Will Braeutigam — upload to speaker portal', done: false },
+      { text: '✍️ Nick Accordino to sign speaker agreement', done: false },
+      { text: '✍️ Will Braeutigam to sign speaker agreement', done: false },
+      { text: '🔗 Collect LinkedIn profiles from both speakers (optional — for speaker portal)', done: false },
+      { text: '✈️ Confirm travel is arranged for both Deloitte speakers', done: false },
+
+      // ── Pre-event ──
+      { text: '🎬 Schedule dry run / rehearsal call with Nick & Will ahead of Amplify', done: false },
+      { text: '📋 Build run-of-show / game plan for the session (timing, transitions, Q&A)', done: false },
+      { text: '📞 Send "Know Before You Go" briefing to both speakers (room location, AV setup, timing, logistics)', done: false },
+      { text: '👤 Assign a Workiva person to be in the room day-of (set up slides, support speakers, own logistics)', done: false },
+
+      // ── SPEAKER LOGISTICS (wrangling) ──
+      { text: '🖼️ Collect headshot — Nick Accordino (Deloitte)', done: false },
+      { text: '🖼️ Collect headshot — Will Braeutigam (Deloitte)', done: false },
+      { text: '📄 Collect bio — Nick Accordino (Deloitte)', done: false },
+      { text: '📄 Collect bio — Will Braeutigam (Deloitte)', done: false },
+      { text: '🔗 Collect LinkedIn profile — Nick Accordino (optional)', done: false },
+      { text: '🔗 Collect LinkedIn profile — Will Braeutigam (optional)', done: false },
+      { text: '✍️ Speaker agreement signed — Nick Accordino', done: false },
+      { text: '✍️ Speaker agreement signed — Will Braeutigam', done: false },
+      { text: '🎟️ Send complimentary registration promo code — Nick Accordino', done: false },
+      { text: '🎟️ Send complimentary registration promo code — Will Braeutigam', done: false },
+      { text: '✈️ Confirm travel arranged — Nick Accordino', done: false },
+      { text: '✈️ Confirm travel arranged — Will Braeutigam', done: false },
+      { text: '🖼️ Collect high-res Deloitte logo for slide deck', done: false },
+
+      // ── FINAL CHECKS ──
+      { text: '📱 Check session appears correctly in Amplify mobile app — Aug 21', done: false },
+    ]
+  },
+  {
+    title: 'FR11 · SpaceX IPO Customer & Advisor Panel',
+    type: 'collab',
+    copresenter: 'Laynie Thomas or Josh Gertsch (Moderator) + SpaceX (Courtney Zeppetella, CAO) + KPMG (TBC) + Gibson Dunn (TBD)',
+    color: '#f59e0b',
+    tasks: [
+      // ── SPEAKER CONFIRMATION ──
+      { text: '🎤 SpaceX (Courtney Zeppetella, CAO) — ✅ Confirmed via KPMG', done: true },
+      { text: '🎤 KPMG speaker — PENDING: Philip Wiedel to reach out to KPMG contacts next week to confirm participation & who will speak', done: false },
+      { text: '🎤 Gibson Dunn speaker — TBD (identify & confirm)', done: false },
+      { text: '🔗 Once KPMG confirmed: Kelsey (partner team) to connect KPMG speaker with you + Josh to schedule kickoff', done: false },
+
+      // ── SESSION BUILD ──
+      { text: '✍️ Finalize session description for agenda / Rainfocus', done: false },
+      { text: '✍️ Write / finalize session abstract — share at kickoff', done: false },
+      { text: '📅 Schedule kickoff call — you, Josh, KPMG speaker, SpaceX speaker (once all confirmed)', done: false },
+      { text: '🎙️ Schedule customer interview call with SpaceX — deep-dive on their IPO journey (separate from kickoff)', done: false },
+      { text: '✍️ Session leads draft Q&A questionnaire / moderator guide based on customer interview', done: false },
+      { text: '📤 Send Q&A questionnaire to KPMG & SpaceX for review and feedback', done: false },
+      { text: '✏️ Incorporate KPMG & SpaceX feedback — finalize Q&A and talking points', done: false },
+      { text: '🖥️ Build session slides (opening, context, transitions) — due Jul 22', done: false },
+      { text: '🖥️ [OPTIONAL] KPMG to provide any slides they want to include — set deadline at kickoff', done: false },
+      { text: '🖼️ Collect high-res logos from KPMG and SpaceX for slide deck', done: false },
+      { text: '📝 Submit learning objectives for CPE review — CPE Reviewer: Darek Paulukovich — due Jul 23', done: false },
+      { text: '✅ Incorporate CPE review feedback', done: false },
+      { text: '📤 Submit final deck — due Aug 11', done: false },
+      { text: '📞 Schedule talking-points walkthrough call — go through Q&A with KPMG & SpaceX once they\'ve digested it', done: false },
+      { text: '🎬 Schedule rehearsal / dry run call with all speakers ahead of Amplify', done: false },
+      { text: '📋 Build run-of-show / game plan for the session', done: false },
+      { text: '👤 Assign a Workiva person to be in the room day-of (slides, AV, speaker support)', done: false },
+
+      // ── SPEAKER LOGISTICS (wrangling) ──
+      { text: '🖼️ Collect headshot — Courtney Zeppetella (SpaceX)', done: false },
+      { text: '🖼️ Collect headshot — KPMG speaker (TBC)', done: false },
+      { text: '📄 Collect bio — Courtney Zeppetella (SpaceX)', done: false },
+      { text: '📄 Collect bio — KPMG speaker (TBC)', done: false },
+      { text: '🔗 Collect LinkedIn profile — Courtney Zeppetella (optional)', done: false },
+      { text: '🔗 Collect LinkedIn profile — KPMG speaker (optional)', done: false },
+      { text: '✍️ Speaker agreement signed — Courtney Zeppetella (SpaceX)', done: false },
+      { text: '✍️ Speaker agreement signed — KPMG speaker (TBC)', done: false },
+      { text: '🎟️ Send complimentary registration promo code — Courtney Zeppetella (SpaceX)', done: false },
+      { text: '🎟️ Send complimentary registration promo code — KPMG speaker (TBC)', done: false },
+      { text: '✈️ Confirm travel arranged — Courtney Zeppetella (SpaceX)', done: false },
+      { text: '✈️ Confirm travel arranged — KPMG speaker (TBC)', done: false },
+      { text: '📧 Send "Know Before You Go" briefing to all speakers (room, AV, timing, logistics)', done: false },
+
+      // ── FINAL CHECKS ──
+      { text: '📱 Check session appears correctly in Amplify mobile app — Aug 21', done: false },
+    ]
+  },
+  {
+    title: 'FR12 · Tech-Enabled IPO Roadmap',
+    type: 'collab',
+    copresenter: 'Laynie Thomas (PMM) + Josh Gertsch (IP) + Jill Verderber (SC)',
+    color: '#22c55e',
+    tasks: [
+      // ── SPEAKERS — all internal & confirmed ──
+      { text: '🎤 Laynie Thomas (PMM, Workiva) — ✅ CONFIRMED', done: true },
+      { text: '🎤 Josh Gertsch (IP, Workiva) — ✅ CONFIRMED', done: true },
+      { text: '🎤 Jill Verderber (SC, Workiva) — ✅ CONFIRMED', done: true },
+
+      // ── SESSION BUILD ──
+      { text: '📅 Schedule kickoff call — Laynie, Josh & Jill', done: false },
+      { text: '✍️ Build talk track & narrative document — full script/outline of what gets said, when, by whom', done: false },
+      { text: '🖥️ Map demos into talk track — document exactly where each demo appears, what it shows, and who drives it', done: false },
+      { text: '🎨 Align on all demo scenarios to feature — confirm which AI features: Intelligent Finance (peer benchmarking, disclosure drafting), Controls (narratives/workflows), SEC post-IPO (impairment disclosures, risk factor changes)', done: false },
+      { text: '🔗 Connect with GRC team — align on GRC-specific demo content and NextGen elements to feature in session', done: false },
+      { text: '🖥️ Update / build GRC-specific demo environment with NextGen elements', done: false },
+      { text: '🏗️ Build / update presentation slides — due Jul 22', done: false },
+      { text: '🎨 Update visuals in presentation (graphics, screenshots, diagrams)', done: false },
+      { text: '📝 Submit learning objectives for CPE review — CPE Reviewer: Stan Starobin — due Jul 23', done: false },
+      { text: '✅ Incorporate CPE review feedback', done: false },
+      { text: '📤 Submit final deck — due Aug 11', done: false },
+
+      // ── JILL / SC ENABLEMENT ──
+      { text: '🎓 Schedule GRC demo training sessions for Jill — get her up to speed on GRC-specific demo portions', done: false },
+      { text: '🔐 Confirm Jill has access to all required demo environments (GRC, NextGen, all relevant sandboxes)', done: false },
+      { text: '✅ Jill: run through GRC demo independently to confirm she\'s comfortable before rehearsal', done: false },
+
+      // ── LIVE DEMO LOGISTICS ──
+      { text: '📋 Determine live demo logistics with Amplify event staff — how the demo will display/run while presenting on stage', done: false },
+      { text: '🎬 Schedule rehearsal call(s) — all three speakers, run full talk track + demos end to end', done: false },
+      { text: '🏨 Block time on-site at Amplify for a tech check in the session room before presentation time', done: false },
+      { text: '📋 Build run-of-show game plan — timing, demo handoffs, transitions, Q&A', done: false },
+
+      // ── SPEAKER PORTAL (internal speakers) ──
+      { text: '✅ Laynie Thomas: complete speaker portal (bio, headshot, all required fields)', done: false },
+      { text: '✅ Josh Gertsch: complete speaker portal (bio, headshot, all required fields)', done: false },
+      { text: '✅ Jill Verderber: complete speaker portal (bio, headshot, all required fields)', done: false },
+
+      // ── FINAL CHECKS ──
+      { text: '📧 Send "Know Before You Go" briefing to Laynie, Josh & Jill', done: false },
+      { text: '📱 Check session appears correctly in Amplify mobile app — Aug 21', done: false },
+    ]
+  },
+  {
+    title: 'FR13 · Capital Markets Deal Simulation',
+    type: 'collab',
+    copresenter: 'John Jolley (Moderator) + Eric Fuhrmann (CRM) + Accounting Advisory TBC + Law Firm TBC + Customer TBC',
+    color: '#ec4899',
+    tasks: [
+      // ── SPEAKER CONFIRMATION — INTERNAL (confirmed) ──
+      { text: '🎤 John Jolley (Moderator, Workiva) — ✅ CONFIRMED', done: true },
+      { text: '🎤 Eric Fuhrmann (CRM, Workiva) — ✅ CONFIRMED', done: true },
+
+      // ── SPEAKER CONFIRMATION — EXTERNAL (outreach needed ASAP) ──
+      { text: '📬 Accounting Advisory: Reach out to John Gleason (PwC) — FIRST CHOICE — outreach not yet sent', done: false },
+      { text: '📬 Law Firm: Reach out to Scott Westhoff (Latham & Watkins) — FIRST CHOICE — outreach not yet sent', done: false },
+      { text: '📬 Customer: Reach out to Lance Weber (Voyager) — FIRST CHOICE — outreach not yet sent', done: false },
+      { text: '⏳ PwC (John Gleason) — STATUS: [update here: e.g. "Asked 7/3 — awaiting response"]', done: false },
+      { text: '⏳ Latham & Watkins (Scott Westhoff) — STATUS: [update here]', done: false },
+      { text: '⏳ Voyager (Lance Weber) — STATUS: [update here]', done: false },
+      { text: '🔄 If PwC declines — identify backup accounting advisory speaker', done: false },
+      { text: '🔄 If Latham declines — identify backup law firm speaker', done: false },
+      { text: '🔄 If Voyager declines — identify backup customer speaker', done: false },
+
+      // ── SESSION BUILD — INTERNAL DEVELOPMENT (start now, pre-speaker confirmation) ──
+      { text: '✍️ Write session abstract', done: false },
+      { text: '🤝 Start working sessions with Eric Fuhrmann ASAP — align on session concept, structure & flow', done: false },
+      { text: '🏗️ Determine session format: how interactive, how much simulation vs. conversation, roles each speaker plays', done: false },
+      { text: '🖥️ Scope demo environment needs — what needs to be built, what it will simulate, who owns the build', done: false },
+      { text: '🖥️ Build demo environment / simulation visual (to serve as the live "stage" for the session)', done: false },
+      { text: '📋 Determine other visual / presentation needs (slides, props, facilitation aids)', done: false },
+      { text: '📝 Submit learning objectives for CPE review — CPE Reviewer: Stan Starobin — due Jul 23', done: false },
+      { text: '✅ Incorporate CPE review feedback', done: false },
+
+      // ── SESSION BUILD — WITH FULL SPEAKER LINEUP (once all confirmed) ──
+      { text: '📅 Schedule speaker kickoff call — John Jolley, Eric Fuhrmann + all external speakers', done: false },
+      { text: '💡 Frame kickoff as a brainstorm — invite PwC, Latham & customer to help shape the session structure and content', done: false },
+      { text: '✍️ Draft session guide / flow document — not a Q&A, but a structured map of the simulation: who speaks when, what each speaker contributes, how the demo plays in', done: false },
+      { text: '📤 Share session guide with all speakers for review and input', done: false },
+      { text: '✏️ Incorporate speaker feedback — finalize guide', done: false },
+      { text: '📤 Submit first draft deck / materials — due Jul 22', done: false },
+      { text: '📤 Submit final deck — due Aug 11', done: false },
+      { text: '📞 Schedule 1-2 follow-up calls post-kickoff — make sure all speakers know their role, timing & what to contribute', done: false },
+      { text: '🎬 Schedule rehearsal / dry run with all speakers ahead of Amplify', done: false },
+      { text: '📋 Build run-of-show game plan for the session', done: false },
+      { text: '👤 Assign a Workiva person to be in the room day-of (AV, slides, speaker support)', done: false },
+
+      // ── SPEAKER LOGISTICS (once external speakers confirmed) ──
+      { text: '🖼️ Collect headshot — PwC speaker (TBC)', done: false },
+      { text: '🖼️ Collect headshot — Latham speaker (TBC)', done: false },
+      { text: '🖼️ Collect headshot — Customer speaker (TBC)', done: false },
+      { text: '📄 Collect bio — PwC speaker (TBC)', done: false },
+      { text: '📄 Collect bio — Latham speaker (TBC)', done: false },
+      { text: '📄 Collect bio — Customer speaker (TBC)', done: false },
+      { text: '🔗 Collect LinkedIn profiles — all external speakers (optional)', done: false },
+      { text: '✍️ Speaker agreement signed — PwC speaker', done: false },
+      { text: '✍️ Speaker agreement signed — Latham speaker', done: false },
+      { text: '✍️ Speaker agreement signed — Customer speaker', done: false },
+      { text: '🎟️ Send complimentary registration promo code — PwC speaker', done: false },
+      { text: '🎟️ Send complimentary registration promo code — Latham speaker', done: false },
+      { text: '🎟️ Send complimentary registration promo code — Customer speaker', done: false },
+      { text: '✈️ Confirm travel arranged — PwC speaker', done: false },
+      { text: '✈️ Confirm travel arranged — Latham speaker', done: false },
+      { text: '✈️ Confirm travel arranged — Customer speaker', done: false },
+      { text: '🖼️ Collect high-res logos from PwC, Latham & Customer company for slide deck', done: false },
+      { text: '📧 Send "Know Before You Go" briefing to all external speakers', done: false },
+
+      // ── FINAL CHECKS ──
+      { text: '📱 Check session appears correctly in Amplify mobile app — Aug 21', done: false },
+    ]
+  }
+];
+
+function preseedSessions() {
+  if (state.sessions.length === 0) {
+    state.sessions = PRESEED_SESSIONS.map(s => ({ ...s }));
+    saveState();
+  }
+}
+
+// ── Persistence ──
+async function loadState() {
+  try {
+    const r = await window.storage.get(STORAGE_KEY);
+    if (r) state = JSON.parse(r.value);
+  } catch(e) {}
+}
+
+async function saveState() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+// ── Countdown ──
+function updateCountdown() {
+  const amplify = new Date('2026-09-14');
+  const now = new Date();
+  const diff = Math.ceil((amplify - now) / 86400000);
+  document.getElementById('countdown-text').textContent =
+    diff > 0 ? `${diff} days to Amplify` : 'Amplify is here!';
+  document.getElementById('stat-days').textContent = diff > 0 ? diff : '🎉';
+}
+
+// ── Render ──
+function render() {
+  updateCountdown();
+  renderStats();
+  renderFocusBoard();
+  renderSessions();
+  renderStandalone('hub', 'hub-tasks-list', 'hub-done-badge');
+  renderStandalone('hh', 'hh-tasks-list', 'hh-done-badge');
+  renderTeam();
+  document.getElementById('global-notes').value = state.notes || '';
+}
+
+function renderStats() {
+  const total = state.sessions.length;
+  let done = 0, totalTasks = 0;
+  state.sessions.forEach(s => {
+    s.tasks.forEach(t => { totalTasks++; if(t.done) done++; });
+  });
+  document.getElementById('stat-sessions').textContent = total;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-total').textContent = totalTasks;
+  document.getElementById('bar-sessions').style.width = total > 0 ? '100%' : '0%';
+  document.getElementById('bar-tasks').style.width = totalTasks > 0 ? Math.round(done/totalTasks*100)+'%' : '0%';
+  document.getElementById('session-count-badge').textContent = total;
+  // Next deadline
+  const upcoming = ['Wk Jul 6','Jul 22','Jul 23','Aug 11','Aug 21'];
+  document.getElementById('stat-next').textContent = upcoming[0] || '—';
+}
+
+function renderSessions() {
+  const grid = document.getElementById('sessions-grid');
+  const empty = document.getElementById('empty-sessions');
+  if (state.sessions.length === 0) {
+    empty.style.display = '';
+    grid.innerHTML = '';
+    grid.appendChild(empty);
+    return;
+  }
+  empty.style.display = 'none';
+  // Rebuild
+  const frag = document.createDocumentFragment();
+  state.sessions.forEach((s, si) => {
+    const done = s.tasks.filter(t=>t.done).length;
+    const total = s.tasks.length;
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    card.innerHTML = `
+      <div class="session-card-header">
+        <div class="session-color-dot" style="background:${s.color}"></div>
+        <div class="session-title-area">
+          <div class="session-title">${escHtml(s.title)}</div>
+          <div class="session-meta">
+            <span class="session-tag ${s.type}">${s.type === 'solo' ? 'Solo' : '👥 Co-present'}</span>
+            ${s.copresenter ? `<span class="session-tag">${escHtml(s.copresenter)}</span>` : ''}
+          </div>
+        </div>
+        <button onclick="removeSession(${si})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;" title="Remove session">×</button>
+      </div>
+      <div class="session-progress-bar">
+        <div class="session-progress-fill" style="width:${pct}%;background:${s.color}"></div>
+      </div>
+      <div class="session-tasks" id="tasks-${si}">
+        ${s.tasks.map((t,ti) => taskHTML(si,ti,t)).join('')}
+      </div>
+      <div class="add-task-row" id="add-row-${si}">
+        <input class="add-task-input" id="add-input-${si}" placeholder="Add a task…" onkeydown="if(event.key==='Enter')submitTask(${si})">
+        <button class="add-task-submit" onclick="submitTask(${si})">Add</button>
+      </div>
+      <div class="resources-section">
+        <div class="resources-header">
+          <span class="resources-label">📎 Resources & Links</span>
+          <button class="add-task-inline" onclick="toggleResourceRow(${si})">+ link</button>
+        </div>
+        <div class="resources-list" id="res-list-${si}">
+          ${(s.resources||[]).length === 0
+            ? '<span style="font-size:11px;color:var(--muted);font-style:italic;">No links yet — add Google Slides, Docs, or any reference URL</span>'
+            : (s.resources||[]).map((r,ri) => `
+              <div class="resource-item">
+                <span class="resource-label-text" title="${escHtml(r.label)}">${escHtml(r.label)}</span>
+                <a class="resource-link" href="${escHtml(r.url)}" target="_blank" title="${escHtml(r.url)}">${escHtml(r.url)}</a>
+                <button class="resource-remove" onclick="removeResource(${si},${ri});event.stopPropagation()">×</button>
+              </div>`).join('')}
+        </div>
+        <div class="add-resource-row" id="res-add-${si}">
+          <input type="text" id="res-label-${si}" placeholder="Label (e.g. Google Slides, Content Doc)">
+          <input type="text" id="res-url-${si}" placeholder="https://…">
+          <div class="add-resource-actions">
+            <button class="btn-add-link" onclick="addResource(${si})">Save</button>
+            <button class="btn-cancel-link" onclick="toggleResourceRow(${si})">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="session-card-footer">
+        <div class="footer-pct"><strong>${pct}%</strong> complete · ${done}/${total} tasks</div>
+        <button class="add-task-inline" onclick="toggleAddRow(${si})">+ task</button>
+      </div>
+    `;
+    frag.appendChild(card);
+  });
+  grid.innerHTML = '';
+  grid.appendChild(frag);
+}
+
+function taskHTML(si, ti, t) {
+  const urgency = getUrgency(t.text);
+  const assignee = t.assignee ? state.team.find(m => m.name === t.assignee) : null;
+  const chipHtml = assignee
+    ? `<div class="assignee-chip assigned" onclick="openAssigneeDropdown(event,${si},${ti})" style="border-color:${assignee.color}40">
+        <div class="assignee-avatar" style="background:${assignee.color}">${initials(assignee.name)}</div>
+        ${assignee.name.split(' ')[0]}
+       </div>`
+    : `<div class="assignee-chip unassigned" onclick="openAssigneeDropdown(event,${si},${ti})">
+        <div class="assignee-avatar">+</div>
+        Assign
+       </div>`;
+  return `
+    <div class="task-item">
+      <div class="task-check${t.done?' done':''}" onclick="toggleTask(${si},${ti})"></div>
+      <div class="task-text${t.done?' done':''}" onclick="toggleTask(${si},${ti})">${escHtml(t.text)}</div>
+      ${urgency ? `<div class="task-deadline ${t.done?'done-tag':urgency}">${deadlineLabel(t.text)}</div>` : ''}
+      ${chipHtml}
+    </div>
+  `;
+}
+
+function getUrgency(text) {
+  const t = text.toLowerCase();
+  if (t.includes('jul 22') || t.includes('jul 6') || t.includes('july 6') || t.includes('july 22') || t.includes('rainfocus') || t.includes('bio') || t.includes('abstract')) return 'soon';
+  if (t.includes('aug 11') || t.includes('aug 21') || t.includes('cpe') || t.includes('final')) return 'later';
+  return '';
+}
+function deadlineLabel(text) {
+  const t = text.toLowerCase();
+  if (t.includes('jul 22') || t.includes('july 22')) return 'Jul 22';
+  if (t.includes('aug 11')) return 'Aug 11';
+  if (t.includes('aug 21')) return 'Aug 21';
+  if (t.includes('jul 6') || t.includes('july 6')) return 'Jul 6';
+  if (t.includes('cpe')) return 'Jul 23';
+  if (t.includes('rainfocus') || t.includes('bio')) return 'Jun 26';
+  if (t.includes('first draft')) return 'Jul 22';
+  if (t.includes('final deck') || t.includes('final draft')) return 'Aug 11';
+  return '';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Actions ──
+function toggleTask(si, ti) {
+  state.sessions[si].tasks[ti].done = !state.sessions[si].tasks[ti].done;
+  saveState();
+  renderSessions();
+  renderStats();
+}
+
+function toggleAddRow(si) {
+  const row = document.getElementById(`add-row-${si}`);
+  row.classList.toggle('visible');
+  if (row.classList.contains('visible')) document.getElementById(`add-input-${si}`).focus();
+}
+
+function submitTask(si) {
+  const input = document.getElementById(`add-input-${si}`);
+  const text = input.value.trim();
+  if (!text) return;
+  state.sessions[si].tasks.push({ text, done: false });
+  input.value = '';
+  saveState();
+  renderSessions();
+  renderStats();
+}
+
+function removeSession(si) {
+  if (!confirm(`Remove "${state.sessions[si].title}"?`)) return;
+  state.sessions.splice(si, 1);
+  saveState();
+  render();
+}
+
+// ── Modal ──
+function openAddSession() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('new-title').focus();
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('new-title').value = '';
+  document.getElementById('new-copresenter').value = '';
+}
+function addSession() {
+  const title = document.getElementById('new-title').value.trim();
+  if (!title) { document.getElementById('new-title').focus(); return; }
+  const type = document.getElementById('new-type').value;
+  const copresenter = document.getElementById('new-copresenter').value.trim();
+  const color = SESSION_COLORS[state.sessions.length % SESSION_COLORS.length];
+  state.sessions.push({
+    title, type, copresenter, color,
+    tasks: getDefaultTasks(type)
+  });
+  closeModal();
+  saveState();
+  render();
+}
+
+// ── Notes ──
+let notesTimer;
+function saveNotes() {
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => {
+    state.notes = document.getElementById('global-notes').value;
+    saveState();
+  }, 600);
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Focus Board ──
+// Priority scoring: higher = more urgent
+// Signals: blocking keywords, deadline proximity, no assignee, incomplete
+function scoreFocusTask(text) {
+  const t = text.toLowerCase();
+  let score = 0;
+
+  // Blocking / critical signals
+  if (t.includes('asap') || t.includes('immediately') || t.includes('pending') || t.includes('not yet sent')) score += 50;
+  if (t.includes('⚠️') || t.includes('dependency')) score += 45;
+  if (t.includes('confirm') && (t.includes('speaker') || t.includes('participation'))) score += 40;
+  if (t.includes('reach out') || t.includes('outreach')) score += 38;
+  if (t.includes('philip wiedel') || t.includes('kelsey')) score += 35;
+  if (t.includes('kickoff')) score += 30;
+
+  // Deadline proximity
+  if (t.includes('jul 6') || t.includes('july 6') || t.includes('next week')) score += 45;
+  if (t.includes('jul 22') || t.includes('jul 23') || t.includes('jul 24') || t.includes('jul 31')) score += 35;
+  if (t.includes('aug 11') || t.includes('aug 21')) score += 20;
+
+  // Content that needs to start now
+  if (t.includes('abstract') || t.includes('session description')) score += 28;
+  if (t.includes('sla') || t.includes('content sla')) score += 25;
+  if (t.includes('eric fuhrmann') && t.includes('working session')) score += 35;
+  if (t.includes('talk track') || t.includes('structure')) score += 22;
+  if (t.includes('demo environment') || t.includes('scope demo')) score += 22;
+
+  // Hub hard deadlines
+  if (t.includes('jul 24') || t.includes('jul 31')) score += 40;
+  if (t.includes('staffing') && t.includes('approved')) score += 30;
+  if (t.includes('lightning talk')) score += 20;
+  if (t.includes('working session') && t.includes('mike g')) score += 30;
+
+  // Info/speaker portal tasks are lower priority
+  if (t.includes('linkedin') || t.includes('travel') || t.includes('promo code') || t.includes('registration')) score -= 10;
+  if (t.includes('mobile app') && t.includes('aug 21')) score -= 5;
+  if (t.startsWith('🎤') && t.includes('✅')) score = -99; // already confirmed speakers, not a priority
+
+  return score;
+}
+
+function getPriority(score) {
+  if (score >= 40) return 'critical';
+  if (score >= 20) return 'high';
+  return 'normal';
+}
+
+function getPriorityLabel(score) {
+  if (score >= 40) return '🔴 Critical';
+  if (score >= 20) return '🟡 High';
+  return 'Normal';
+}
+
+function collectFocusTasks() {
+  const items = [];
+
+  // From sessions
+  state.sessions.forEach((s, si) => {
+    s.tasks.forEach((t, ti) => {
+      if (t.done) return;
+      const score = scoreFocusTask(t.text);
+      if (score <= 0) return;
+      items.push({
+        text: t.text,
+        score,
+        source: s.title,
+        sourceColor: s.color,
+        type: 'session',
+        si, ti,
+        assignee: t.assignee || null
+      });
+    });
+  });
+
+  // From Hub
+  (state.hub || []).forEach((t, i) => {
+    if (t.done) return;
+    const score = scoreFocusTask(t.text);
+    if (score <= 0) return;
+    items.push({
+      text: t.text,
+      score,
+      source: '🏢 Hub / Expo Hall',
+      sourceColor: '#06b6d4',
+      type: 'hub',
+      idx: i,
+      assignee: t.assignee || null
+    });
+  });
+
+  // From Happy Hour
+  (state.hh || []).forEach((t, i) => {
+    if (t.done) return;
+    const score = scoreFocusTask(t.text);
+    if (score <= 0) return;
+    items.push({
+      text: t.text,
+      score,
+      source: '🥂 Happy Hour',
+      sourceColor: '#a78bfa',
+      type: 'hh',
+      idx: i,
+      assignee: t.assignee || null
+    });
+  });
+
+  // Sort by score desc
+  items.sort((a, b) => b.score - a.score);
+  return items;
+}
+
+function renderFocusBoard() {
+  const limit = parseInt(document.getElementById('focus-limit').value) || 10;
+  const all = collectFocusTasks();
+  const items = all.slice(0, limit);
+  document.getElementById('focus-count').textContent = all.length + ' open';
+
+  const list = document.getElementById('focus-list');
+  if (!items.length) {
+    list.innerHTML = '<div class="focus-empty"><div class="icon">✅</div>Nothing urgent right now — you\'re on top of it.</div>';
+    return;
+  }
+
+  list.innerHTML = items.map((item, idx) => {
+    const priority = getPriority(item.score);
+    const assignee = item.assignee ? state.team.find(m => m.name === item.assignee) : null;
+    const chipHtml = assignee
+      ? `<div class="assignee-chip assigned" style="border-color:${assignee.color}40;margin-top:2px;" onclick="focusAssign(event,${idx})">
+          <div class="assignee-avatar" style="background:${assignee.color}">${initials(assignee.name)}</div>
+          ${assignee.name.split(' ')[0]}
+         </div>`
+      : `<div class="assignee-chip unassigned" style="margin-top:2px;" onclick="focusAssign(event,${idx})">
+          <div class="assignee-avatar">+</div>Assign
+         </div>`;
+
+    return `
+      <div class="focus-item" data-focus-idx="${idx}">
+        <div class="focus-check" onclick="completeFocusTask(${idx})"></div>
+        <div class="focus-body">
+          <div class="focus-text">${escHtml(item.text)}</div>
+          <div class="focus-source" style="border-color:${item.sourceColor};background:${item.sourceColor}15;color:${item.sourceColor};">
+            ${escHtml(item.source)}
+          </div>
+        </div>
+        ${chipHtml}
+        <div class="focus-priority-badge ${priority}">${getPriorityLabel(item.score)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Store items on window for click handlers
+  window._focusItems = all;
+}
+
+function completeFocusTask(idx) {
+  const item = window._focusItems[idx];
+  if (!item) return;
+  if (item.type === 'session') {
+    state.sessions[item.si].tasks[item.ti].done = true;
+  } else {
+    state[item.type][item.idx].done = true;
+  }
+  saveState();
+  render();
+}
+
+let _focusAssignIdx = null;
+function focusAssign(e, idx) {
+  e.stopPropagation();
+  _focusAssignIdx = idx;
+  _dropSi = null; _dropTi = null; _saKey = null; _saIdx = null;
+  const item = window._focusItems[idx];
+  const current = item.assignee || null;
+  const drop = document.getElementById('assignee-dropdown');
+  drop.innerHTML = [
+    `<div class="assignee-option unassign-opt" onclick="assignFocusTask(null)"><div class="opt-avatar" style="background:var(--border);color:var(--muted)">—</div>Unassigned</div>`,
+    ...state.team.map(m => `<div class="assignee-option ${current===m.name?'active':''}" onclick="assignFocusTask('${escHtml(m.name)}')"><div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>${escHtml(m.name)}</div>`),
+    state.team.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px 10px;">Add team members first</div>` : ''
+  ].join('');
+  const rect = e.currentTarget.getBoundingClientRect();
+  drop.style.display = 'block';
+  const dropW = 180;
+  let left = rect.left;
+  if (left + dropW > window.innerWidth - 8) left = window.innerWidth - dropW - 8;
+  drop.style.left = left + 'px';
+  drop.style.top = (rect.bottom + 4) + 'px';
+}
+
+function assignFocusTask(name) {
+  const item = window._focusItems[_focusAssignIdx];
+  if (!item) { closeAssigneeDropdown(); return; }
+  if (item.type === 'session') {
+    if (name) state.sessions[item.si].tasks[item.ti].assignee = name;
+    else delete state.sessions[item.si].tasks[item.ti].assignee;
+  } else {
+    if (name) state[item.type][item.idx].assignee = name;
+    else delete state[item.type][item.idx].assignee;
+  }
+  _focusAssignIdx = null;
+  closeAssigneeDropdown();
+  saveState();
+  render();
+}
+
+// ── Resource Links ──
+function toggleResourceRow(si) {
+  const row = document.getElementById(`res-add-${si}`);
+  row.classList.toggle('visible');
+  if (row.classList.contains('visible')) document.getElementById(`res-label-${si}`).focus();
+}
+
+function addResource(si) {
+  const label = document.getElementById(`res-label-${si}`).value.trim();
+  const url = document.getElementById(`res-url-${si}`).value.trim();
+  if (!url) return;
+  if (!state.sessions[si].resources) state.sessions[si].resources = [];
+  state.sessions[si].resources.push({ label: label || url, url });
+  document.getElementById(`res-label-${si}`).value = '';
+  document.getElementById(`res-url-${si}`).value = '';
+  toggleResourceRow(si);
+  saveState();
+  renderSessions();
+}
+
+function removeResource(si, ri) {
+  state.sessions[si].resources.splice(ri, 1);
+  saveState();
+  renderSessions();
+}
+
+// ── Standalone Tasks (Hub & Happy Hour) ──
+const STANDALONE_PRESEED = {
+  hub: [
+    { text: '📅 Schedule working session with Mike G — talk through identified outcomes → design', done: false },
+    { text: '🏗️ Evaluate booth concept — do we have the right number of stations and structures? Provide feedback in working sessions', done: false },
+    { text: '💡 Develop lightning talk topic(s) for the Capital Markets Hub space', done: false },
+    { text: '📋 Add lightning talk topics to Hub Planning Workbook', done: false },
+    { text: '📅 Braindate + EBC bookings open mid-July — confirm process and book slots', done: false },
+    { text: '🔍 Validate feasibility: base product experts from CM space instead of main booth', done: false },
+    { text: '👥 Confirm staffing plan once approved by leadership (expected early next week)', done: false },
+    { text: '📱 Jul 24 — Mobile app description + links due for Hub space', done: false },
+    { text: '📊 Jul 31 — Lead capture qualifiers & surveys due: https://docs.google.com/spreadsheets/d/12ZJVN_iLAvV9xIPgQTGvsQoCY9QoH0P-B2AJGi20uLM/edit', done: false },
+  ],
+  hh: [
+    { text: '📋 Define event format — venue, timing, guest list size, hosted vs. open', done: false },
+    { text: '📍 Confirm venue / space within or adjacent to the Amplify venue', done: false },
+    { text: '📅 Lock date & time on the Amplify schedule', done: false },
+    { text: '👥 Build invite list — which speakers, customers, prospects, partners to include', done: false },
+    { text: '📧 Draft and send invitations', done: false },
+    { text: '🍹 Confirm catering / F&B', done: false },
+    { text: '🎨 Any event branding or signage needed?', done: false },
+    { text: '📊 Determine if lead capture / follow-up process is needed post-event', done: false },
+    { text: '👤 Assign day-of owner to run the event logistics', done: false },
+  ]
+};
+
+function preseedStandalone() {
+  if (!state.hub || state.hub.length === 0) state.hub = STANDALONE_PRESEED.hub.map(t => ({...t}));
+  if (!state.hh || state.hh.length === 0) state.hh = STANDALONE_PRESEED.hh.map(t => ({...t}));
+}
+
+function renderStandalone(key, listId, badgeId) {
+  const tasks = state[key] || [];
+  const done = tasks.filter(t => t.done).length;
+  document.getElementById(badgeId).textContent = `${done}/${tasks.length}`;
+  const list = document.getElementById(listId);
+  if (!tasks.length) {
+    list.innerHTML = '<div class="empty-standalone">No tasks yet.</div>';
+    return;
+  }
+  list.innerHTML = tasks.map((t, i) => `
+    <div class="standalone-task" onclick="toggleStandaloneTask('${key}',${i})">
+      <div class="task-check${t.done?' done':''}"></div>
+      <div class="task-text${t.done?' done':''}" style="flex:1;font-size:13px;">${escHtml(t.text)}</div>
+      ${t.assignee ? (() => { const m = state.team.find(m=>m.name===t.assignee); return m ? `<div class="assignee-chip assigned" onclick="openStandaloneAssignee(event,'${key}',${i})" style="border-color:${m.color}40"><div class="assignee-avatar" style="background:${m.color}">${initials(m.name)}</div>${m.name.split(' ')[0]}</div>` : ''; })() : `<div class="assignee-chip unassigned" onclick="openStandaloneAssignee(event,'${key}',${i})"><div class="assignee-avatar">+</div>Assign</div>`}
+      <button onclick="removeStandaloneTask('${key}',${i});event.stopPropagation()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0;margin-left:4px;">×</button>
+    </div>
+  `).join('');
+}
+
+function toggleStandaloneTask(key, i) {
+  state[key][i].done = !state[key][i].done;
+  saveState();
+  renderStandalone(key, `${key}-tasks-list`, `${key}-done-badge`);
+}
+
+function removeStandaloneTask(key, i) {
+  state[key].splice(i, 1);
+  saveState();
+  renderStandalone(key, `${key}-tasks-list`, `${key}-done-badge`);
+}
+
+function addStandaloneTask(key) {
+  const input = document.getElementById(`${key}-add-input`);
+  const text = input.value.trim();
+  if (!text) return;
+  state[key].push({ text, done: false });
+  input.value = '';
+  saveState();
+  renderStandalone(key, `${key}-tasks-list`, `${key}-done-badge`);
+}
+
+let _saKey = null, _saIdx = null;
+function openStandaloneAssignee(e, key, i) {
+  e.stopPropagation();
+  _dropSi = null; _dropTi = null;
+  _saKey = key; _saIdx = i;
+  const drop = document.getElementById('assignee-dropdown');
+  const current = state[key][i].assignee || null;
+  drop.innerHTML = [
+    `<div class="assignee-option unassign-opt" onclick="assignStandaloneTask(null)"><div class="opt-avatar" style="background:var(--border);color:var(--muted)">—</div>Unassigned</div>`,
+    ...state.team.map(m => `<div class="assignee-option ${current===m.name?'active':''}" onclick="assignStandaloneTask('${escHtml(m.name)}')"><div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>${escHtml(m.name)}</div>`),
+    state.team.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px 10px;">Add team members first</div>` : ''
+  ].join('');
+  const rect = e.currentTarget.getBoundingClientRect();
+  drop.style.display = 'block';
+  const dropW = 180;
+  let left = rect.left;
+  if (left + dropW > window.innerWidth - 8) left = window.innerWidth - dropW - 8;
+  drop.style.left = left + 'px';
+  drop.style.top = (rect.bottom + 4) + 'px';
+}
+
+function assignStandaloneTask(name) {
+  if (_saKey === null) return;
+  if (name) state[_saKey][_saIdx].assignee = name;
+  else delete state[_saKey][_saIdx].assignee;
+  _saKey = null; _saIdx = null;
+  closeAssigneeDropdown();
+  saveState();
+  renderStandalone('hub', 'hub-tasks-list', 'hub-done-badge');
+  renderStandalone('hh', 'hh-tasks-list', 'hh-done-badge');
+}
+
+// ── Team ──
+const AVATAR_COLORS = ['#4f7cff','#f59e0b','#22c55e','#ec4899','#a78bfa','#f97316','#06b6d4','#84cc16','#ef4444','#14b8a6'];
+
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+}
+
+function renderTeam() {
+  const grid = document.getElementById('team-grid');
+  const badge = document.getElementById('team-count-badge');
+  badge.textContent = state.team.length;
+  if (!state.team.length) {
+    grid.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No team members yet.</div>';
+    return;
+  }
+  grid.innerHTML = state.team.map((m, i) => `
+    <div class="team-member-pill">
+      <div class="pill-avatar" style="background:${m.color}">${initials(m.name)}</div>
+      ${escHtml(m.name)}
+      <button class="pill-remove" onclick="removeMember(${i})" title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+function addMember() {
+  const input = document.getElementById('member-input');
+  const name = input.value.trim();
+  if (!name || state.team.find(m => m.name.toLowerCase() === name.toLowerCase())) { input.focus(); return; }
+  const color = AVATAR_COLORS[state.team.length % AVATAR_COLORS.length];
+  state.team.push({ name, color });
+  input.value = '';
+  saveState();
+  renderTeam();
+}
+
+function removeMember(idx) {
+  const name = state.team[idx].name;
+  state.team.splice(idx, 1);
+  // unassign from tasks
+  state.sessions.forEach(s => s.tasks.forEach(t => { if (t.assignee === name) delete t.assignee; }));
+  saveState();
+  renderTeam();
+  renderSessions();
+}
+
+// ── Assignee dropdown ──
+let _dropSi = null, _dropTi = null;
+
+function openAssigneeDropdown(e, si, ti) {
+  e.stopPropagation();
+  _dropSi = si; _dropTi = ti;
+  const drop = document.getElementById('assignee-dropdown');
+  const current = state.sessions[si].tasks[ti].assignee || null;
+
+  drop.innerHTML = [
+    `<div class="assignee-option unassign-opt" onclick="assignTask(null)">
+      <div class="opt-avatar" style="background:var(--border);color:var(--muted)">—</div>
+      Unassigned
+    </div>`,
+    ...state.team.map(m => `
+      <div class="assignee-option ${current===m.name?'active':''}" onclick="assignTask('${escHtml(m.name)}')">
+        <div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>
+        ${escHtml(m.name)}
+      </div>
+    `),
+    state.team.length === 0
+      ? `<div style="font-size:12px;color:var(--muted);padding:8px 10px;">Add team members below first</div>`
+      : ''
+  ].join('');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  drop.style.display = 'block';
+  const dropW = 180;
+  let left = rect.left;
+  if (left + dropW > window.innerWidth - 8) left = window.innerWidth - dropW - 8;
+  drop.style.left = left + 'px';
+  drop.style.top = (rect.bottom + 4) + 'px';
+}
+
+function assignTask(name) {
+  if (_dropSi === null) return;
+  if (name) state.sessions[_dropSi].tasks[_dropTi].assignee = name;
+  else delete state.sessions[_dropSi].tasks[_dropTi].assignee;
+  closeAssigneeDropdown();
+  saveState();
+  renderSessions();
+}
+
+function closeAssigneeDropdown() {
+  document.getElementById('assignee-dropdown').style.display = 'none';
+  _dropSi = null; _dropTi = null;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#assignee-dropdown') && !e.target.closest('.assignee-chip')) {
+    closeAssigneeDropdown();
+  }
+});
+
+// ── Init ──
+loadState().then(() => { preseedSessions(); preseedStandalone(); render(); });
+</script>
+</body>
+</html>
