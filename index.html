@@ -1673,39 +1673,11 @@ function renderSessions() {
   }
   empty.style.display = 'none';
 
-  // Preserve per-card filter state by reading from existing selects before rebuild
-  const cardFilters = {};
-  state.sessions.forEach((s, si) => {
-    const sf = document.getElementById(`sf-status-${si}`);
-    const af = document.getElementById(`sf-assignee-${si}`);
-    cardFilters[si] = {
-      status: sf ? sf.value : 'all',
-      assignee: af ? af.value : 'all'
-    };
-  });
-
   const frag = document.createDocumentFragment();
   state.sessions.forEach((s, si) => {
-    const allTasks = s.tasks;
-    const done = allTasks.filter(t => t.done).length;
-    const total = allTasks.length;
+    const done = s.tasks.filter(t => t.done).length;
+    const total = s.tasks.length;
     const pct = total > 0 ? Math.round(done / total * 100) : 0;
-    const f = cardFilters[si] || { status: 'all', assignee: 'all' };
-
-    // Build assignee options for this card's filter
-    const assigneeOpts = '<option value="all">All</option>' +
-      state.team.map(m => `<option value="${escHtml(m.name)}">${escHtml(m.name)}</option>`).join('');
-
-    // Apply filters
-    const visibleTasks = allTasks.map((t, ti) => ({ t, ti })).filter(({ t }) => {
-      if (f.status === 'incomplete' && t.done) return false;
-      if (f.status === 'complete' && !t.done) return false;
-      if (f.assignee !== 'all' && t.assignee !== f.assignee) return false;
-      return true;
-    });
-
-    const filterActive = f.status !== 'all' || f.assignee !== 'all';
-    const hiddenCount = allTasks.length - visibleTasks.length;
 
     const card = document.createElement('div');
     card.className = 'session-card';
@@ -1749,21 +1721,8 @@ function renderSessions() {
         </div>
       </div>
       <div class="task-list-divider"></div>
-      <div class="card-filter-row">
-        <select id="sf-status-${si}" class="filter-select card-filter" data-si="${si}">
-          <option value="all"${f.status==='all'?' selected':''}>All tasks</option>
-          <option value="incomplete"${f.status==='incomplete'?' selected':''}>Incomplete</option>
-          <option value="complete"${f.status==='complete'?' selected':''}>Complete</option>
-        </select>
-        <select id="sf-assignee-${si}" class="filter-select card-filter" data-si="${si}">
-          ${assigneeOpts}
-        </select>
-      </div>
       <div class="session-tasks" id="tasks-${si}">
-        ${visibleTasks.length === 0
-          ? `<div style="padding:12px 18px;font-size:12px;color:var(--muted);font-style:italic;">No tasks match this filter.</div>`
-          : visibleTasks.map(({ t, ti }) => taskHTML(si, ti, t)).join('')}
-        ${filterActive && hiddenCount > 0 ? `<div style="padding:4px 18px 8px;font-size:11px;color:var(--muted);">+ ${hiddenCount} task${hiddenCount > 1 ? 's' : ''} hidden</div>` : ''}
+        ${s.tasks.map((t, ti) => taskHTML(si, ti, t)).join('')}
       </div>
       <div class="add-task-row" id="add-row-${si}">
         <input class="add-task-input" id="add-input-${si}" placeholder="Add a task…" onkeydown="if(event.key==='Enter')submitTask(${si})">
@@ -1785,15 +1744,6 @@ function renderSessions() {
 
   grid.innerHTML = '';
   grid.appendChild(frag);
-
-  // Restore assignee filter selections after rebuild
-  state.sessions.forEach((s, si) => {
-    const af = document.getElementById(`sf-assignee-${si}`);
-    if (af && cardFilters[si]) {
-      af.value = cardFilters[si].assignee;
-      if (af.value !== cardFilters[si].assignee) af.value = 'all';
-    }
-  });
 }
 
 function taskHTML(si, ti, t) {
@@ -1863,6 +1813,7 @@ let _dueSi = null, _dueTi = null;
 function openDueDatePicker(e, si, ti) {
   e.stopPropagation();
   closeAllPopups();
+  const _anchorEl = e.target.closest('[data-action="duedate"]') || e.target;
   _dueSi = si; _dueTi = ti;
   const existing = state.sessions[si].tasks[ti].dueDate || '';
   const drop = document.getElementById('due-date-dropdown');
@@ -1878,7 +1829,7 @@ function openDueDatePicker(e, si, ti) {
       </div>
     </div>
   `;
-  const rect = e.currentTarget.getBoundingClientRect();
+  const rect = (_anchorEl || e.target).getBoundingClientRect();
   drop.style.display = 'block';
   let left = rect.left;
   if (left + 220 > window.innerWidth - 8) left = window.innerWidth - 228;
@@ -2231,6 +2182,7 @@ function completeFocusTask(idx) {
 let _focusAssignIdx = null;
 function focusAssign(e, idx) {
   e.stopPropagation();
+  const _anchorEl = e.target || e.currentTarget;
   _focusAssignIdx = idx;
   _dropSi = null; _dropTi = null; _saKey = null; _saIdx = null;
   const item = window._focusItems[idx];
@@ -2241,7 +2193,7 @@ function focusAssign(e, idx) {
     ...state.team.map(m => `<div class="assignee-option ${current===m.name?'active':''}" onclick="assignFocusTask('${escHtml(m.name)}')"><div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>${escHtml(m.name)}</div>`),
     state.team.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px 10px;">Add team members first</div>` : ''
   ].join('');
-  const rect = e.currentTarget.getBoundingClientRect();
+  const rect = (_anchorEl || e.target).getBoundingClientRect();
   drop.style.display = 'block';
   const dropW = 180;
   let left = rect.left;
@@ -2368,6 +2320,7 @@ function addStandaloneTask(key) {
 let _saKey = null, _saIdx = null;
 function openStandaloneAssignee(e, key, i) {
   e.stopPropagation();
+  const _anchorEl = e.target.closest('.assignee-chip') || e.target;
   _dropSi = null; _dropTi = null;
   _saKey = key; _saIdx = i;
   const drop = document.getElementById('assignee-dropdown');
@@ -2377,7 +2330,7 @@ function openStandaloneAssignee(e, key, i) {
     ...state.team.map(m => `<div class="assignee-option ${current===m.name?'active':''}" onclick="assignStandaloneTask('${escHtml(m.name)}')"><div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>${escHtml(m.name)}</div>`),
     state.team.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px 10px;">Add team members first</div>` : ''
   ].join('');
-  const rect = e.currentTarget.getBoundingClientRect();
+  const rect = (_anchorEl || e.target).getBoundingClientRect();
   drop.style.display = 'block';
   const dropW = 180;
   let left = rect.left;
@@ -2498,13 +2451,6 @@ document.addEventListener('dblclick', e => {
   startEditTask(si, ti, el);
 });
 
-// Per-card filter selects — use change event delegation on document
-document.addEventListener('change', e => {
-  if (e.target.classList.contains('card-filter')) {
-    renderSessions();
-  }
-});
-
 // ── Assignee dropdown ──
 let _dropSi = null, _dropTi = null;
 
@@ -2512,7 +2458,8 @@ function openAssigneeDropdown(e, si, ti) {
   closeAllPopups();
   _dropSi = si; _dropTi = ti;
   const drop = document.getElementById('assignee-dropdown');
-  const current = state.sessions[si].tasks[ti].assignee || null;
+  const current = (state.sessions[si] && state.sessions[si].tasks[ti]) ? state.sessions[si].tasks[ti].assignee || null : null;
+  const _anchorEl = e.target.closest('[data-action="assign"]') || e.target;
 
   drop.innerHTML = [
     `<div class="assignee-option unassign-opt" data-action="pick-assignee" data-name="">
@@ -2530,7 +2477,7 @@ function openAssigneeDropdown(e, si, ti) {
       : ''
   ].join('');
 
-  const rect = e.currentTarget.getBoundingClientRect();
+  const rect = (_anchorEl || e.target).getBoundingClientRect();
   drop.style.display = 'block';
   const dropW = 180;
   let left = rect.left;
