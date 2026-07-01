@@ -1663,23 +1663,9 @@ function renderSessions() {
   const grid = document.getElementById('sessions-grid');
   const empty = document.getElementById('empty-sessions');
 
-  // Read current filter values BEFORE touching the DOM
+  // Read filter values only — never rebuild the dropdowns here
   const statusFilter = (document.getElementById('filter-status') || {}).value || 'all';
-  const assigneeFilterEl = document.getElementById('filter-assignee');
-  const assigneeVal = (assigneeFilterEl || {}).value || 'all';
-
-  // Rebuild assignee dropdown options while preserving the current selection
-  if (assigneeFilterEl) {
-    const prev = assigneeVal;
-    assigneeFilterEl.innerHTML = '<option value="all">All assignees</option>' +
-      state.team.map(m => `<option value="${escHtml(m.name)}">${escHtml(m.name)}</option>`).join('');
-    // Restore selection
-    assigneeFilterEl.value = prev;
-    // If the previously selected member was removed, fall back to 'all'
-    if (assigneeFilterEl.value !== prev) assigneeFilterEl.value = 'all';
-  }
-
-  const effectiveAssignee = (assigneeFilterEl || {}).value || 'all';
+  const effectiveAssignee = (document.getElementById('filter-assignee') || {}).value || 'all';
 
   if (state.sessions.length === 0) {
     empty.style.display = '';
@@ -1775,23 +1761,6 @@ function renderSessions() {
   grid.appendChild(frag);
 }
 
-function dueDateUrgency(dateStr) {
-  if (!dateStr) return '';
-  const due = new Date(dateStr);
-  const now = new Date();
-  const days = Math.ceil((due - now) / 86400000);
-  if (days < 0) return 'overdue';
-  if (days <= 3) return 'urgent';
-  if (days <= 10) return 'soon';
-  return 'later';
-}
-
-function formatDueDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 function taskHTML(si, ti, t) {
   const assignee = t.assignee ? state.team.find(m => m.name === t.assignee) : null;
   const chipHtml = assignee
@@ -1883,25 +1852,52 @@ function openDueDatePicker(e, si, ti) {
   setTimeout(() => document.getElementById('due-date-input').focus(), 50);
 }
 
+function formatDueDate(dateStr) {
+  if (!dateStr) return '';
+  // Parse YYYY-MM-DD without timezone conversion by splitting manually
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day); // local date, no UTC shift
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function dueDateUrgency(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const due = new Date(year, month - 1, day);
+  const now = new Date(); now.setHours(0,0,0,0);
+  const days = Math.ceil((due - now) / 86400000);
+  if (days < 0) return 'overdue';
+  if (days <= 3) return 'urgent';
+  if (days <= 10) return 'soon';
+  return 'later';
+}
+
 function saveDueDate() {
   const val = document.getElementById('due-date-input').value;
   if (_dueSi !== null) {
-    state.sessions[_dueSi].tasks[_dueTi].dueDate = val || null;
+    // Close and reset first so UI responds immediately
+    const si = _dueSi, ti = _dueTi;
+    closeDueDatePicker();
+    state.sessions[si].tasks[ti].dueDate = val || null;
     saveState();
     renderSessions();
     renderFocusBoard();
+  } else {
+    closeDueDatePicker();
   }
-  closeDueDatePicker();
 }
 
 function clearDueDate() {
   if (_dueSi !== null) {
-    delete state.sessions[_dueSi].tasks[_dueTi].dueDate;
+    const si = _dueSi, ti = _dueTi;
+    closeDueDatePicker();
+    delete state.sessions[si].tasks[ti].dueDate;
     saveState();
     renderSessions();
     renderFocusBoard();
+  } else {
+    closeDueDatePicker();
   }
-  closeDueDatePicker();
 }
 
 function closeDueDatePicker() {
@@ -2222,6 +2218,9 @@ function focusAssign(e, idx) {
 function assignFocusTask(name) {
   const item = window._focusItems[_focusAssignIdx];
   if (!item) { closeAssigneeDropdown(); return; }
+  const idx = _focusAssignIdx;
+  _focusAssignIdx = null;
+  closeAssigneeDropdown();
   if (item.type === 'session') {
     if (name) state.sessions[item.si].tasks[item.ti].assignee = name;
     else delete state.sessions[item.si].tasks[item.ti].assignee;
@@ -2229,8 +2228,6 @@ function assignFocusTask(name) {
     if (name) state[item.type][item.idx].assignee = name;
     else delete state[item.type][item.idx].assignee;
   }
-  _focusAssignIdx = null;
-  closeAssigneeDropdown();
   saveState();
   render();
 }
@@ -2356,10 +2353,11 @@ function openStandaloneAssignee(e, key, i) {
 
 function assignStandaloneTask(name) {
   if (_saKey === null) return;
-  if (name) state[_saKey][_saIdx].assignee = name;
-  else delete state[_saKey][_saIdx].assignee;
+  const key = _saKey, idx = _saIdx;
   _saKey = null; _saIdx = null;
   closeAssigneeDropdown();
+  if (name) state[key][idx].assignee = name;
+  else delete state[key][idx].assignee;
   saveState();
   renderStandalone('hub', 'hub-tasks-list', 'hub-done-badge');
   renderStandalone('hh', 'hh-tasks-list', 'hh-done-badge');
@@ -2378,15 +2376,25 @@ function renderTeam() {
   badge.textContent = state.team.length;
   if (!state.team.length) {
     grid.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No team members yet.</div>';
-    return;
+  } else {
+    grid.innerHTML = state.team.map((m, i) => `
+      <div class="team-member-pill">
+        <div class="pill-avatar" style="background:${m.color}">${initials(m.name)}</div>
+        ${escHtml(m.name)}
+        <button class="pill-remove" onclick="removeMember(${i})" title="Remove">×</button>
+      </div>
+    `).join('');
   }
-  grid.innerHTML = state.team.map((m, i) => `
-    <div class="team-member-pill">
-      <div class="pill-avatar" style="background:${m.color}">${initials(m.name)}</div>
-      ${escHtml(m.name)}
-      <button class="pill-remove" onclick="removeMember(${i})" title="Remove">×</button>
-    </div>
-  `).join('');
+
+  // Keep assignee filter dropdown in sync with team — only rebuilt here, never inside renderSessions
+  const assigneeFilterEl = document.getElementById('filter-assignee');
+  if (assigneeFilterEl) {
+    const prev = assigneeFilterEl.value;
+    assigneeFilterEl.innerHTML = '<option value="all">All assignees</option>' +
+      state.team.map(m => `<option value="${escHtml(m.name)}">${escHtml(m.name)}</option>`).join('');
+    assigneeFilterEl.value = prev;
+    if (assigneeFilterEl.value !== prev) assigneeFilterEl.value = 'all';
+  }
 }
 
 function addMember() {
@@ -2446,9 +2454,10 @@ function openAssigneeDropdown(e, si, ti) {
 
 function assignTask(name) {
   if (_dropSi === null) return;
-  if (name) state.sessions[_dropSi].tasks[_dropTi].assignee = name;
-  else delete state.sessions[_dropSi].tasks[_dropTi].assignee;
+  const si = _dropSi, ti = _dropTi;
   closeAssigneeDropdown();
+  if (name) state.sessions[si].tasks[ti].assignee = name;
+  else delete state.sessions[si].tasks[ti].assignee;
   saveState();
   renderSessions();
 }
