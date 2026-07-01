@@ -743,6 +743,18 @@
   .task-item:hover { background: var(--surface2); }
   .task-check { margin-top: 3px; }
 
+  /* ── Per-card filter row ── */
+  .card-filter-row {
+    display: flex;
+    gap: 8px;
+    padding: 8px 18px 4px;
+    border-top: 1px solid var(--border);
+  }
+  .card-filter-row .filter-select {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
   /* ── Filter controls ── */
   .filter-controls {
     display: flex;
@@ -1202,16 +1214,6 @@
     <div class="section-header">
       <h2>Your Sessions</h2>
       <div class="badge" id="session-count-badge">0</div>
-      <div class="filter-controls" id="session-filters">
-        <select id="filter-status" onchange="renderSessions()" class="filter-select">
-          <option value="all">All tasks</option>
-          <option value="incomplete">Incomplete only</option>
-          <option value="complete">Complete only</option>
-        </select>
-        <select id="filter-assignee" onchange="renderSessions()" class="filter-select">
-          <option value="all">All assignees</option>
-        </select>
-      </div>
       <button class="add-btn" onclick="openAddSession()">+ Add Session</button>
     </div>
     <div class="sessions-grid" id="sessions-grid">
@@ -1663,10 +1665,6 @@ function renderSessions() {
   const grid = document.getElementById('sessions-grid');
   const empty = document.getElementById('empty-sessions');
 
-  // Read filter values only — never rebuild the dropdowns here
-  const statusFilter = (document.getElementById('filter-status') || {}).value || 'all';
-  const effectiveAssignee = (document.getElementById('filter-assignee') || {}).value || 'all';
-
   if (state.sessions.length === 0) {
     empty.style.display = '';
     grid.innerHTML = '';
@@ -1674,22 +1672,39 @@ function renderSessions() {
     return;
   }
   empty.style.display = 'none';
+
+  // Preserve per-card filter state by reading from existing selects before rebuild
+  const cardFilters = {};
+  state.sessions.forEach((s, si) => {
+    const sf = document.getElementById(`sf-status-${si}`);
+    const af = document.getElementById(`sf-assignee-${si}`);
+    cardFilters[si] = {
+      status: sf ? sf.value : 'all',
+      assignee: af ? af.value : 'all'
+    };
+  });
+
   const frag = document.createDocumentFragment();
   state.sessions.forEach((s, si) => {
     const allTasks = s.tasks;
-    const done = allTasks.filter(t=>t.done).length;
+    const done = allTasks.filter(t => t.done).length;
     const total = allTasks.length;
-    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    const f = cardFilters[si] || { status: 'all', assignee: 'all' };
+
+    // Build assignee options for this card's filter
+    const assigneeOpts = '<option value="all">All</option>' +
+      state.team.map(m => `<option value="${escHtml(m.name)}">${escHtml(m.name)}</option>`).join('');
 
     // Apply filters
-    const visibleTasks = allTasks.map((t, ti) => ({t, ti})).filter(({t}) => {
-      if (statusFilter === 'incomplete' && t.done) return false;
-      if (statusFilter === 'complete' && !t.done) return false;
-      if (effectiveAssignee !== 'all' && t.assignee !== effectiveAssignee) return false;
+    const visibleTasks = allTasks.map((t, ti) => ({ t, ti })).filter(({ t }) => {
+      if (f.status === 'incomplete' && t.done) return false;
+      if (f.status === 'complete' && !t.done) return false;
+      if (f.assignee !== 'all' && t.assignee !== f.assignee) return false;
       return true;
     });
 
-    const filterActive = statusFilter !== 'all' || effectiveAssignee !== 'all';
+    const filterActive = f.status !== 'all' || f.assignee !== 'all';
     const hiddenCount = allTasks.length - visibleTasks.length;
 
     const card = document.createElement('div');
@@ -1715,12 +1730,12 @@ function renderSessions() {
           <button class="add-task-inline" onclick="toggleResourceRow(${si})">+ link</button>
         </div>
         <div class="resources-list" id="res-list-${si}">
-          ${(s.resources||[]).length === 0
-            ? '<span style="font-size:11px;color:var(--muted);font-style:italic;">No links yet — add Google Slides, Docs, or any reference URL</span>'
-            : (s.resources||[]).map((r,ri) => `
+          ${(s.resources || []).length === 0
+            ? '<span style="font-size:11px;color:var(--muted);font-style:italic;">No links yet</span>'
+            : (s.resources || []).map((r, ri) => `
               <div class="resource-item">
                 <span class="resource-label-text" title="${escHtml(r.label)}">${escHtml(r.label)}</span>
-                <a class="resource-link" href="${escHtml(r.url)}" target="_blank" title="${escHtml(r.url)}">${escHtml(r.url)}</a>
+                <a class="resource-link" href="${escHtml(r.url)}" target="_blank">${escHtml(r.url)}</a>
                 <button class="resource-remove" onclick="removeResource(${si},${ri});event.stopPropagation()">×</button>
               </div>`).join('')}
         </div>
@@ -1734,11 +1749,21 @@ function renderSessions() {
         </div>
       </div>
       <div class="task-list-divider"></div>
+      <div class="card-filter-row">
+        <select id="sf-status-${si}" class="filter-select card-filter" data-si="${si}">
+          <option value="all"${f.status==='all'?' selected':''}>All tasks</option>
+          <option value="incomplete"${f.status==='incomplete'?' selected':''}>Incomplete</option>
+          <option value="complete"${f.status==='complete'?' selected':''}>Complete</option>
+        </select>
+        <select id="sf-assignee-${si}" class="filter-select card-filter" data-si="${si}">
+          ${assigneeOpts}
+        </select>
+      </div>
       <div class="session-tasks" id="tasks-${si}">
         ${visibleTasks.length === 0
-          ? `<div style="padding:12px 18px;font-size:12px;color:var(--muted);font-style:italic;">No tasks match the current filter.</div>`
-          : visibleTasks.map(({t, ti}) => taskHTML(si, ti, t)).join('')}
-        ${filterActive && hiddenCount > 0 ? `<div style="padding:6px 18px 8px;font-size:11px;color:var(--muted);">+ ${hiddenCount} task${hiddenCount>1?'s':''} hidden by filter</div>` : ''}
+          ? `<div style="padding:12px 18px;font-size:12px;color:var(--muted);font-style:italic;">No tasks match this filter.</div>`
+          : visibleTasks.map(({ t, ti }) => taskHTML(si, ti, t)).join('')}
+        ${filterActive && hiddenCount > 0 ? `<div style="padding:4px 18px 8px;font-size:11px;color:var(--muted);">+ ${hiddenCount} task${hiddenCount > 1 ? 's' : ''} hidden</div>` : ''}
       </div>
       <div class="add-task-row" id="add-row-${si}">
         <input class="add-task-input" id="add-input-${si}" placeholder="Add a task…" onkeydown="if(event.key==='Enter')submitTask(${si})">
@@ -1748,7 +1773,7 @@ function renderSessions() {
         <div class="resources-header">
           <span class="resources-label">📝 Session Notes</span>
         </div>
-        <textarea class="session-notes-textarea" placeholder="Add notes, reminders, open questions for this session…" oninput="saveSessionNote(${si}, this.value)">${escHtml(s.notes||'')}</textarea>
+        <textarea class="session-notes-textarea" placeholder="Add notes, reminders, open questions for this session…" oninput="saveSessionNote(${si}, this.value)">${escHtml(s.notes || '')}</textarea>
       </div>
       <div class="session-card-footer">
         <div class="footer-pct"><strong>${pct}%</strong> complete · ${done}/${total} tasks</div>
@@ -1757,45 +1782,60 @@ function renderSessions() {
     `;
     frag.appendChild(card);
   });
+
   grid.innerHTML = '';
   grid.appendChild(frag);
+
+  // Restore assignee filter selections (since options were rebuilt)
+  state.sessions.forEach((s, si) => {
+    const af = document.getElementById(`sf-assignee-${si}`);
+    if (af && cardFilters[si]) {
+      af.value = cardFilters[si].assignee;
+      if (af.value !== cardFilters[si].assignee) af.value = 'all';
+    }
+  });
+
+  // Wire card-level filter selects via event delegation on the grid
+  grid.querySelectorAll('.card-filter').forEach(sel => {
+    sel.addEventListener('change', () => renderSessions());
+  });
 }
 
 function taskHTML(si, ti, t) {
   const assignee = t.assignee ? state.team.find(m => m.name === t.assignee) : null;
+
+  // Use data attributes instead of inline onclick for assignee chip — more reliable
   const chipHtml = assignee
-    ? `<div class="assignee-chip assigned" onclick="openAssigneeDropdown(event,${si},${ti})" style="border-color:${assignee.color}40">
+    ? `<div class="assignee-chip assigned" data-action="assign" data-si="${si}" data-ti="${ti}" style="border-color:${assignee.color}40">
         <div class="assignee-avatar" style="background:${assignee.color}">${initials(assignee.name)}</div>
-        ${assignee.name.split(' ')[0]}
+        ${escHtml(assignee.name.split(' ')[0])}
        </div>`
-    : `<div class="assignee-chip unassigned" onclick="openAssigneeDropdown(event,${si},${ti})">
+    : `<div class="assignee-chip unassigned" data-action="assign" data-si="${si}" data-ti="${ti}">
         <div class="assignee-avatar">+</div>Assign
        </div>`;
 
-  // Due date chip
   const dueCls = t.dueDate ? dueDateUrgency(t.dueDate) : '';
   const dueLbl = t.dueDate ? formatDueDate(t.dueDate) : '';
   const dueChip = t.dueDate
-    ? `<div class="due-date-chip ${dueCls}" onclick="openDueDatePicker(event,${si},${ti})" title="Change due date">
-        📅 ${dueLbl}${dueCls==='overdue'?' ⚠️':''}
+    ? `<div class="due-date-chip ${dueCls}" data-action="duedate" data-si="${si}" data-ti="${ti}" title="Change due date">
+        📅 ${dueLbl}${dueCls === 'overdue' ? ' ⚠️' : ''}
        </div>`
-    : `<div class="due-date-chip empty" onclick="openDueDatePicker(event,${si},${ti})" title="Set due date">
+    : `<div class="due-date-chip empty" data-action="duedate" data-si="${si}" data-ti="${ti}" title="Set due date">
         + date
        </div>`;
 
   return `
     <div class="task-item" id="task-${si}-${ti}">
-      <div class="task-check${t.done?' done':''}" onclick="toggleTask(${si},${ti})"></div>
+      <div class="task-check${t.done ? ' done' : ''}" data-action="toggle" data-si="${si}" data-ti="${ti}"></div>
       <div class="task-main">
-        <div class="task-text${t.done?' done':''}"
-             ondblclick="startEditTask(${si},${ti},this)"
+        <div class="task-text${t.done ? ' done' : ''}" data-action="edit" data-si="${si}" data-ti="${ti}"
              title="Double-click to edit">${escHtml(t.text)}</div>
         <div class="task-meta-row">
           ${dueChip}
           ${chipHtml}
         </div>
       </div>
-      <button class="task-delete-btn" onclick="deleteTask(${si},${ti});event.stopPropagation()" title="Delete task">×</button>
+      <button class="task-delete-btn" data-action="delete" data-si="${si}" data-ti="${ti}" title="Delete task">×</button>
     </div>
   `;
 }
@@ -2418,6 +2458,40 @@ function removeMember(idx) {
   renderSessions();
 }
 
+// ── Event delegation for session task interactions ──
+document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.getElementById('sessions-grid');
+  if (!grid) return;
+
+  grid.addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const action = el.dataset.action;
+    const si = parseInt(el.dataset.si);
+    const ti = parseInt(el.dataset.ti);
+
+    if (action === 'toggle') {
+      toggleTask(si, ti);
+    } else if (action === 'assign') {
+      e.stopPropagation();
+      openAssigneeDropdown(e, si, ti);
+    } else if (action === 'duedate') {
+      e.stopPropagation();
+      openDueDatePicker(e, si, ti);
+    } else if (action === 'delete') {
+      deleteTask(si, ti);
+    }
+  });
+
+  grid.addEventListener('dblclick', e => {
+    const el = e.target.closest('[data-action="edit"]');
+    if (!el) return;
+    const si = parseInt(el.dataset.si);
+    const ti = parseInt(el.dataset.ti);
+    startEditTask(si, ti, el);
+  });
+});
+
 // ── Assignee dropdown ──
 let _dropSi = null, _dropTi = null;
 
@@ -2456,8 +2530,28 @@ function assignTask(name) {
   if (_dropSi === null) return;
   const si = _dropSi, ti = _dropTi;
   closeAssigneeDropdown();
+
   if (name) state.sessions[si].tasks[ti].assignee = name;
   else delete state.sessions[si].tasks[ti].assignee;
+
+  // Update chip immediately in DOM without waiting for full re-render
+  const taskEl = document.getElementById(`task-${si}-${ti}`);
+  if (taskEl) {
+    const chipEl = taskEl.querySelector('.assignee-chip');
+    if (chipEl) {
+      const member = name ? state.team.find(m => m.name === name) : null;
+      if (member) {
+        chipEl.className = 'assignee-chip assigned';
+        chipEl.style.borderColor = member.color + '40';
+        chipEl.innerHTML = `<div class="assignee-avatar" style="background:${member.color}">${initials(member.name)}</div>${escHtml(member.name.split(' ')[0])}`;
+      } else {
+        chipEl.className = 'assignee-chip unassigned';
+        chipEl.style.borderColor = '';
+        chipEl.innerHTML = `<div class="assignee-avatar">+</div>Assign`;
+      }
+    }
+  }
+
   saveState();
   renderSessions();
 }
