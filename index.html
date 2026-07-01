@@ -1786,18 +1786,13 @@ function renderSessions() {
   grid.innerHTML = '';
   grid.appendChild(frag);
 
-  // Restore assignee filter selections (since options were rebuilt)
+  // Restore assignee filter selections after rebuild
   state.sessions.forEach((s, si) => {
     const af = document.getElementById(`sf-assignee-${si}`);
     if (af && cardFilters[si]) {
       af.value = cardFilters[si].assignee;
       if (af.value !== cardFilters[si].assignee) af.value = 'all';
     }
-  });
-
-  // Wire card-level filter selects via event delegation on the grid
-  grid.querySelectorAll('.card-filter').forEach(sel => {
-    sel.addEventListener('change', () => renderSessions());
   });
 }
 
@@ -2458,56 +2453,74 @@ function removeMember(idx) {
   renderSessions();
 }
 
-// ── Event delegation for session task interactions ──
-document.addEventListener('DOMContentLoaded', () => {
-  const grid = document.getElementById('sessions-grid');
-  if (!grid) return;
+// ── Unified document-level event delegation ──
+// Handles all task interactions and per-card filters without any inline onclick
+// or re-attachable listeners that get destroyed on re-render.
 
-  grid.addEventListener('click', e => {
-    const el = e.target.closest('[data-action]');
-    if (!el) return;
-    const action = el.dataset.action;
-    const si = parseInt(el.dataset.si);
-    const ti = parseInt(el.dataset.ti);
+document.addEventListener('click', e => {
+  // Close dropdowns when clicking outside
+  if (!e.target.closest('#assignee-dropdown') && !e.target.closest('[data-action="assign"]')) {
+    closeAssigneeDropdown();
+  }
+  if (!e.target.closest('#due-date-dropdown') && !e.target.closest('[data-action="duedate"]')) {
+    closeDueDatePicker();
+  }
 
-    if (action === 'toggle') {
-      toggleTask(si, ti);
-    } else if (action === 'assign') {
-      e.stopPropagation();
-      openAssigneeDropdown(e, si, ti);
-    } else if (action === 'duedate') {
-      e.stopPropagation();
-      openDueDatePicker(e, si, ti);
-    } else if (action === 'delete') {
-      deleteTask(si, ti);
-    }
-  });
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
 
-  grid.addEventListener('dblclick', e => {
-    const el = e.target.closest('[data-action="edit"]');
-    if (!el) return;
-    const si = parseInt(el.dataset.si);
-    const ti = parseInt(el.dataset.ti);
-    startEditTask(si, ti, el);
-  });
+  const action = el.dataset.action;
+  const si = el.dataset.si !== undefined ? parseInt(el.dataset.si) : null;
+  const ti = el.dataset.ti !== undefined ? parseInt(el.dataset.ti) : null;
+
+  if (action === 'toggle' && si !== null && ti !== null) {
+    toggleTask(si, ti);
+  } else if (action === 'assign' && si !== null && ti !== null) {
+    e.stopPropagation();
+    openAssigneeDropdown(e, si, ti);
+  } else if (action === 'duedate' && si !== null && ti !== null) {
+    e.stopPropagation();
+    openDueDatePicker(e, si, ti);
+  } else if (action === 'delete' && si !== null && ti !== null) {
+    deleteTask(si, ti);
+  } else if (action === 'pick-assignee') {
+    // Option inside the assignee dropdown
+    const name = el.dataset.name || null;
+    assignTask(name);
+  }
+});
+
+document.addEventListener('dblclick', e => {
+  const el = e.target.closest('[data-action="edit"]');
+  if (!el) return;
+  const si = parseInt(el.dataset.si);
+  const ti = parseInt(el.dataset.ti);
+  startEditTask(si, ti, el);
+});
+
+// Per-card filter selects — use change event delegation on document
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('card-filter')) {
+    renderSessions();
+  }
 });
 
 // ── Assignee dropdown ──
 let _dropSi = null, _dropTi = null;
 
 function openAssigneeDropdown(e, si, ti) {
-  e.stopPropagation();
+  closeAllPopups();
   _dropSi = si; _dropTi = ti;
   const drop = document.getElementById('assignee-dropdown');
   const current = state.sessions[si].tasks[ti].assignee || null;
 
   drop.innerHTML = [
-    `<div class="assignee-option unassign-opt" onclick="assignTask(null)">
+    `<div class="assignee-option unassign-opt" data-action="pick-assignee" data-name="">
       <div class="opt-avatar" style="background:var(--border);color:var(--muted)">—</div>
       Unassigned
     </div>`,
     ...state.team.map(m => `
-      <div class="assignee-option ${current===m.name?'active':''}" onclick="assignTask('${escHtml(m.name)}')">
+      <div class="assignee-option ${current === m.name ? 'active' : ''}" data-action="pick-assignee" data-name="${escHtml(m.name)}">
         <div class="opt-avatar" style="background:${m.color}">${initials(m.name)}</div>
         ${escHtml(m.name)}
       </div>
@@ -2560,15 +2573,6 @@ function closeAssigneeDropdown() {
   document.getElementById('assignee-dropdown').style.display = 'none';
   _dropSi = null; _dropTi = null;
 }
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('#assignee-dropdown') && !e.target.closest('.assignee-chip')) {
-    closeAssigneeDropdown();
-  }
-  if (!e.target.closest('#due-date-dropdown') && !e.target.closest('.due-date-chip')) {
-    closeDueDatePicker();
-  }
-});
 
 // ── Init ──
 loadState().then(() => { preseedSessions(); preseedStandalone(); render(); });
